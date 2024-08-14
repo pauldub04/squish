@@ -2,9 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum TokenType {
+    TT_WORD,
+    TT_INFILE,
+    TT_OUTFILE,
+};
+
 struct Token {
     char* start;
     size_t len;
+    enum TokenType type;
     struct Token* next;
 };
 
@@ -29,15 +36,25 @@ void TokenizerInit(struct Tokenizer* tokenizer, char* line) {
             break;
         }
 
-        char* start = next;
-        while (*next != '\0' && *next != ' ' && *next != '\t' && *next != '\n') {
-            ++next;
+        struct Token* token = (struct Token*)malloc(sizeof(struct Token));
+        token->start = next++;
+        token->next = NULL;
+
+        switch (*token->start) {
+            case '<':
+                token->type = TT_INFILE;
+                break;
+            case '>':
+                token->type = TT_OUTFILE;
+                break;
+            default:
+                token->type = TT_WORD;
+                while (*next != '\0' && *next != ' ' && *next != '\t' && *next != '\n') {
+                    ++next;
+                }
         }
 
-        struct Token* token = (struct Token*)malloc(sizeof(struct Token));
-        token->start = start;
-        token->len = next - start;
-        token->next = NULL;
+        token->len = next - token->start;
 
         if (last_token) {
             last_token->next = token;
