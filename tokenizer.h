@@ -6,6 +6,7 @@ enum TokenType {
     TT_WORD,
     TT_INFILE,
     TT_OUTFILE,
+    TT_PIPE,
 };
 
 struct Token {
@@ -46,6 +47,9 @@ void TokenizerInit(struct Tokenizer* tokenizer, char* line) {
                 break;
             case '>':
                 token->type = TT_OUTFILE;
+                break;
+            case '|':
+                token->type = TT_PIPE;
                 break;
             default:
                 token->type = TT_WORD;
