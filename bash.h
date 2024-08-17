@@ -1,5 +1,6 @@
 #include "tokenizer.h"
 
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
@@ -23,6 +24,13 @@ void pipe_panic(int pipefd[2]) {
     if (pipe(pipefd) == -1) {
         panic("pipe");
     }
+}
+
+void close_opened_fd(int fd) {
+    if (STDIN_FILENO <= fd && fd <= STDERR_FILENO) {
+        return;
+    }
+    close(fd);
 }
 
 enum ErrorCode {
@@ -155,6 +163,19 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
         return;
     }
 
+    int next_in_fd  = STDIN_FILENO;
+    int next_out_fd = STDOUT_FILENO;
+    if (strcmp(cmd->args[0], "cd") == 0) {
+        if (cmd->args[1] == NULL || chdir(cmd->args[1]) < 0) {
+            cmd->error_code = EC_COMMAND_NF;
+            return;
+        }
+        close_opened_fd(in_fd);
+        close_opened_fd(out_fd);
+        run_cmd(cmd->next, next_in_fd, next_out_fd);
+        return;
+    }
+
     if (cmd->in_file != NULL) {
         in_fd = open(cmd->in_file, O_RDONLY); 
         if (in_fd < 0) {
@@ -170,8 +191,6 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
         }
     }
 
-    int next_in_fd  = STDIN_FILENO;
-    int next_out_fd = STDOUT_FILENO;
     if (cmd->next != NULL) {
         int pipefd[2];
         pipe_panic(pipefd);
@@ -194,12 +213,8 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
         }
     } else {
         waitpid(pid, NULL, 0);
-        if (in_fd != STDIN_FILENO) {
-            close(in_fd);
-        }
-        if (out_fd != STDOUT_FILENO) {
-            close(out_fd);
-        }
+        close_opened_fd(in_fd);
+        close_opened_fd(out_fd);
         run_cmd(cmd->next, next_in_fd, next_out_fd);
     }
 }

@@ -116,6 +116,8 @@ def test_shell_pipe():
     assert shell.run("cat < /sys/proc/aa/bb | wc -l >> file") == SYNTAX_ERR
     assert shell.run("cat < /sys/proc/cc/dd | wc -l > file | cat") == SYNTAX_ERR
 
+    assert shell.run("cd / | pwd") == "/"
+    assert shell.run("cd /usr | pwd") == "/usr"
 
 if __name__ == "__main__":
     test_shell_base()
