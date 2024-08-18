@@ -1,23 +1,40 @@
 ifeq ($(OS), Windows_NT)
-    USER_OS := Windows
+	USER_OS := Windows
 else
-    USER_OS := $(shell uname -s)
+	USER_OS := $(shell uname -s)
 endif
 
 ifneq ($(USER_OS), Darwin)
 	ASAN_OPTIONS := detect_leaks=1
 endif
 
-RESULT := shell
-CFLAGS := -g -fsanitize=address,undefined -Wall -Werror
+CC = cc
+CFLAGS := -std=c99 -pedantic -g -fsanitize=address,undefined -Wall -Werror
 
-all: run
+TARGET := shell
+SRC_DIR := src
+BUILD_DIR := build
 
-run: compile
-	ASAN_OPTIONS=$(ASAN_OPTIONS) python3 test.py
+SRCS := $(wildcard $(SRC_DIR)/*.c)
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+DEPS = $(OBJS:%.o=%.d)
 
-compile: $(wildcard *.h)
-	gcc $(CFLAGS) main.c -o $(RESULT)
+
+all: $(TARGET) test
+
+test: $(TARGET)
+	ASAN_OPTIONS=$(ASAN_OPTIONS) python3 test/test.py $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@
+
+-include $(DEPS)
+
+$(BUILD_DIR)/%.c.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 clean:
-	rm -f $(RESULT)
+	rm -rf $(BUILD_DIR) $(TARGET)
+
+.PHONY: all clean install

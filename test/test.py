@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import sys
 
 
 SHELL_PATH = "./shell"
@@ -49,7 +50,7 @@ def test_shell_base():
     assert not os.path.exists("./foo")
 
     assert shell.run("cat\nhello\nworld") == "hello\nworld"
-    assert shell.run("./shell\necho hi\n./shell\necho hello") == "hi\nhello"
+    assert shell.run(f"{SHELL_PATH}\necho hi\n{SHELL_PATH}\necho hello") == "hi\nhello"
 
     assert shell.run("cat /sys/proc/aa/bb") == ""
 
@@ -120,6 +121,8 @@ def test_shell_pipe():
     assert shell.run("cd /usr | pwd") == "/usr"
 
 if __name__ == "__main__":
+    SHELL_PATH = './' + sys.argv[1]
+
     test_shell_base()
     test_shell_io()
     test_shell_pipe()

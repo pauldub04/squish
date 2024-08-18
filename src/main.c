@@ -1,10 +1,12 @@
-#include "bash.h"
+#define  _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <linux/limits.h>
+
+#include "bash.h"
 
 #define RESET "\033[0m"
 #define RED   "\033[31m"
