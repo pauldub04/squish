@@ -1,8 +1,10 @@
-#include <string.h>
-#include <stdio.h>
+#ifndef INPUT_H
+#define INPUT_H
 
 #include "utils.h"
 
+#include <string.h>
+#include <stdio.h>
 
 #define STR_CAP 1024
 
@@ -25,3 +27,5 @@ void input_backspace(struct Input *input);
 void input_backspace_word(struct Input *input);
 
 void input_print(struct Input *input);
+
+#endif /* INPUT_H */

@@ -1,3 +1,6 @@
+#ifndef TOKENIZER_H
+#define TOKENIZER_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,3 +26,5 @@ struct Tokenizer {
 
 void TokenizerInit(struct Tokenizer* tokenizer, char* line);
 void TokenizerFree(struct Tokenizer* tokenizer);
+
+#endif /* TOKENIZER_H */

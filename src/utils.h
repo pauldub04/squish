@@ -1,3 +1,6 @@
+#ifndef UTILS_H
+#define UTILS_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -17,3 +20,5 @@ void strreplace(char *s, const char *s1, const char *s2);
 void clear_line();
 void draw_cursor(int cursor);
 void set_cursor_style(int style);
+
+#endif /* UTILS_H */

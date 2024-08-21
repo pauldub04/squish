@@ -1,6 +1,11 @@
-#include <ctype.h>
-#include <termios.h>
+#ifndef EDITOR_H
+#define EDITOR_H
 
+#include "input.h"
+
+#include <ctype.h>
+#include <string.h>
+#include <termios.h>
 
 #define SEQ_CAP 8
 
@@ -28,3 +33,5 @@ void termios_leave(struct termios *old_term);
 enum KeyAction identify_key(const char *sequence);
 int read_sequence(char *buffer);
 void get_cmd();
+
+#endif /* EDITOR_H */

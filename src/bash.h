@@ -1,3 +1,6 @@
+#ifndef BASH_H
+#define BASH_H
+
 #include "tokenizer.h"
 
 #include <stdbool.h>
@@ -25,3 +28,5 @@ void print_error(enum ErrorCode error_code);
 bool check_error_list(struct Cmd* start);
 void print_error_list(struct Cmd* start); 
 void Exec(struct Tokenizer* tokenizer);
+
+#endif /* BASH_H */
