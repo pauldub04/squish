@@ -28,6 +28,14 @@ void close_opened_fd(int fd) {
     close(fd);
 }
 
+ssize_t read_panic(int fd, void* buf, size_t nbytes) {
+    ssize_t nread = read(fd, buf, nbytes);
+    if (nread == -1) {
+        panic("read");
+    }
+    return nread;
+}
+
 void strreplace(char *s, const char *s1, const char *s2) {
     char *p = strstr(s, s1);
     if (p == NULL) {
@@ -39,4 +47,18 @@ void strreplace(char *s, const char *s1, const char *s2) {
         memmove(p + len2, p + len1, strlen(p + len1) + 1);
     }
     memcpy(p, s2, len2);
+}
+
+void clear_line() {
+    printf("\033[2K\r");
+}
+
+void draw_cursor(int cursor) {
+    printf("\033[%dG", cursor+3);
+}
+
+void set_cursor_style(int style) {
+    // Set the cursor style:
+    // 0 = block, 4 = underline, 6 = beam, 1 = restore default
+    printf("\033[%d q", style);
 }
