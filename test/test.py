@@ -126,3 +126,4 @@ if __name__ == "__main__":
     test_shell_base()
     test_shell_io()
     test_shell_pipe()
+    print("[OK]: All tests passed!");

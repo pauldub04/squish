@@ -12,7 +12,7 @@
 enum KeyAction {
     KEY_NONE,
     KEY_NEWLINE,
-    KEY_NORMAL,
+    KEY_PRINTABLE,
 
     KEY_BACKSPACE,
     KEY_DELETE,
@@ -32,6 +32,6 @@ void termios_leave(struct termios *old_term);
 
 enum KeyAction identify_key(const char *sequence);
 int read_sequence(char *buffer);
-void get_cmd();
+ssize_t get_cmd(char** cmd, size_t* maxlen);
 
 #endif /* EDITOR_H */

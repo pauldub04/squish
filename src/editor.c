@@ -1,5 +1,5 @@
+#define  _GNU_SOURCE
 #include "editor.h"
-#include "input.h"
 
 
 void termios_enter(struct termios *old_term) {
@@ -9,6 +9,7 @@ void termios_enter(struct termios *old_term) {
     new_term.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &new_term);
 
+    setbuf(stdin, NULL);
     setbuf(stdout, NULL);
     set_cursor_style(6);
 }
@@ -42,7 +43,7 @@ enum KeyAction identify_key(const char *sequence) {
     } else if (strcmp(sequence, "\n") == 0) {
         return KEY_NEWLINE;
     } else if (strlen(sequence) == 1 && isprint(sequence[0])) {
-        return KEY_NORMAL;
+        return KEY_PRINTABLE;
     }
     return KEY_NONE;
 }
@@ -58,13 +59,19 @@ int read_sequence(char *buffer) {
     return nread;
 }
 
-void get_cmd() {
+ssize_t get_cmd(char** cmd, size_t* maxlen) {
+    if (!isatty(STDIN_FILENO)) {
+        // used for tests
+        setbuf(stdin, NULL);
+        fprintf(stderr, "> ");
+        return getline(cmd, maxlen, stdin);
+    }
+
     struct termios old_term;
     termios_enter(&old_term);
 
     struct Input input;
     input_init(&input);
-
     input_print(&input);
 
     char sequence[SEQ_CAP];
@@ -104,7 +111,7 @@ void get_cmd() {
                 input_delete_word(&input);
                 break;
 
-            case KEY_NORMAL:
+            case KEY_PRINTABLE:
                 input_insert(&input, sequence[0]);
                 break;
             default:
@@ -114,5 +121,15 @@ void get_cmd() {
     }
 
     termios_leave(&old_term);
-    // printf("\n##%s##", input.str);
+
+    // newline for cmd execution
+    printf("\n");
+
+    // use strlen() instead of input.str_len just to be fully safe
+    *cmd = realloc(*cmd, strlen(input.str)+1);
+    if (*cmd == NULL) {
+        panic("realloc");
+    }
+    strcpy(*cmd, input.str);
+    return strlen(*cmd);
 }

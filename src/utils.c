@@ -1,7 +1,5 @@
 #include "utils.h"
 
-#include <string.h>
-
 void panic(const char *s) {
     fprintf(stderr, "[ERROR]: %s\n", s);
     exit(1);
@@ -36,18 +34,6 @@ ssize_t read_panic(int fd, void* buf, size_t nbytes) {
     return nread;
 }
 
-void strreplace(char *s, const char *s1, const char *s2) {
-    char *p = strstr(s, s1);
-    if (p == NULL) {
-        return;
-    }
-    size_t len1 = strlen(s1);
-    size_t len2 = strlen(s2);
-    if (len1 != len2) {
-        memmove(p + len2, p + len1, strlen(p + len1) + 1);
-    }
-    memcpy(p, s2, len2);
-}
 
 void clear_line() {
     printf("\033[2K\r");
