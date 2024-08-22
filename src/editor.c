@@ -64,10 +64,7 @@ ssize_t read_line(char** lineptr, size_t* n, FILE* stream) {
     }
 
     if (*lineptr == NULL) {
-        *lineptr = malloc(STR_CAP);
-        if (*lineptr == NULL) {
-            return -1;
-        }
+        *lineptr = malloc_panic(STR_CAP);
         *n = STR_CAP;
     }
 
@@ -77,10 +74,7 @@ ssize_t read_line(char** lineptr, size_t* n, FILE* stream) {
     while ((c = fgetc(stream)) != EOF) {
         if (pos >= *n - 1) {
             size_t new_size = *n * 2;
-            char *new_lineptr = realloc(*lineptr, new_size);
-            if (new_lineptr == NULL) {
-                panic("realloc");
-            }
+            char *new_lineptr = realloc_panic(*lineptr, new_size);
             *lineptr = new_lineptr;
             *n = new_size;
         }
@@ -166,10 +160,7 @@ ssize_t get_cmd(char** cmd, size_t* maxlen) {
     printf("\n");
 
     // use strlen() instead of input.str_len just to be fully safe
-    *cmd = realloc(*cmd, strlen(input.str)+1);
-    if (*cmd == NULL) {
-        panic("realloc");
-    }
+    *cmd = realloc_panic(*cmd, strlen(input.str)+1);
     strcpy(*cmd, input.str);
     return strlen(*cmd);
 }

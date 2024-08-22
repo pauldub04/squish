@@ -35,6 +35,23 @@ ssize_t read_panic(int fd, void* buf, size_t nbytes) {
 }
 
 
+void* malloc_panic(size_t size) {
+    void* res = malloc(size);
+    if (res == NULL) {
+        panic("malloc");
+    }
+    return res;
+}
+
+void* realloc_panic(void* ptr, size_t size) {
+    void* res = realloc(ptr, size);
+    if (res == NULL) {
+        panic("realloc");
+    }
+    return res;
+}
+
+
 void clear_line() {
     printf("\033[2K\r");
 }

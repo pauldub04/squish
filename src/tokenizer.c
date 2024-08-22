@@ -17,7 +17,7 @@ void TokenizerInit(struct Tokenizer* tokenizer, char* line) {
             break;
         }
 
-        struct Token* token = (struct Token*)malloc(sizeof(struct Token));
+        struct Token* token = malloc_panic(sizeof(struct Token));
         token->start = next++;
         token->next = NULL;
 

@@ -1,6 +1,8 @@
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
 
+#include "utils.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -2,10 +2,7 @@
 #include "utils.h"
 
 struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
-    struct Cmd* cmd = (struct Cmd*) malloc(sizeof(struct Cmd));
-    if (cmd == NULL) {
-        panic("can not allocate memory");
-    }
+    struct Cmd* cmd = malloc_panic(sizeof(struct Cmd));
 
     cmd->args = NULL;
     cmd->in_file  = NULL;
@@ -79,10 +76,7 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     }
 
     // because of NULL in the end
-    cmd->args = (char**) malloc((args_cnt+1) * sizeof(char*));
-    if (cmd->args == NULL) {
-        panic("can not allocate memory");
-    }
+    cmd->args = (char**) malloc_panic((args_cnt+1) * sizeof(char*));
 
     int i = 0;
     for (struct Token* token = start; token != NULL && token->type != TT_PIPE; token = token->next) {
