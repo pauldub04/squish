@@ -5,8 +5,8 @@ void panic(const char *s) {
     exit(1);
 }
 
-__pid_t fork_panic() {
-    __pid_t pid = fork();
+pid_t fork_panic(void) {
+    pid_t pid = fork();
     if (pid == -1) {
         panic("fork");
     }
@@ -52,7 +52,7 @@ void* realloc_panic(void* ptr, size_t size) {
 }
 
 
-void clear_line() {
+void clear_line(void) {
     printf("\033[2K\r");
 }
 

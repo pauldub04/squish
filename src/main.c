@@ -4,10 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <linux/limits.h>
 
 
-int main() {
+int main(void) {
     char* line = NULL;
     size_t maxlen = 0;
 

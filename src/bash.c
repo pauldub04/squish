@@ -145,7 +145,7 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
         next_in_fd = pipefd[0];
     }
 
-    __pid_t pid = fork_panic();
+    pid_t pid = fork_panic();
     if (pid == 0) {
         if (in_fd != STDIN_FILENO) {
             dup2(in_fd, STDIN_FILENO);

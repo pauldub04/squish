@@ -30,7 +30,7 @@ class Shell:
             raise AssertionError("Sanitizer error:\n{}".format(stderr))
 
         assert shell.returncode == 0
-        return '\n'.join([x for x in stdout.split('\n') if x])
+        return '\n'.join([x.strip() for x in stdout.split('\n') if x])
 
 
 def test_shell_base():

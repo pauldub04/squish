@@ -1,0 +1,19 @@
+name: test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04, ubuntu-20.04, macos-latest, macos-13, macos-12]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: make test
+      run: make test
