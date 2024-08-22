@@ -27,11 +27,12 @@ enum KeyAction {
     KEY_CTRL_ARROW_RIGHT,
 };
 
-void termios_enter(struct termios *old_term);
-void termios_leave(struct termios *old_term);
+void termios_enter(struct termios* old_term);
+void termios_leave(struct termios* old_term);
 
 enum KeyAction identify_key(const char *sequence);
-int read_sequence(char *buffer);
+ssize_t read_sequence(char* buffer);
+ssize_t read_line(char** lineptr, size_t* n, FILE* stream);
 ssize_t get_cmd(char** cmd, size_t* maxlen);
 
 #endif /* EDITOR_H */

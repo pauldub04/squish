@@ -1,8 +1,7 @@
-#define  _GNU_SOURCE
 #include "editor.h"
 
 
-void termios_enter(struct termios *old_term) {
+void termios_enter(struct termios* old_term) {
     tcgetattr(STDIN_FILENO, old_term);
 
     struct termios new_term = *old_term;
@@ -14,12 +13,12 @@ void termios_enter(struct termios *old_term) {
     set_cursor_style(6);
 }
 
-void termios_leave(struct termios *old_term) {
+void termios_leave(struct termios* old_term) {
     set_cursor_style(1);
     tcsetattr(STDIN_FILENO, TCSANOW, old_term);
 }
 
-enum KeyAction identify_key(const char *sequence) {
+enum KeyAction identify_key(const char* sequence) {
     if (strcmp(sequence, "\x7f") == 0) {
         return KEY_BACKSPACE;
     } else if (strcmp(sequence, "\033[3~") == 0) {
@@ -48,9 +47,9 @@ enum KeyAction identify_key(const char *sequence) {
     return KEY_NONE;
 }
 
-int read_sequence(char *buffer) {
+ssize_t read_sequence(char* buffer) {
     memset(buffer, 0, SEQ_CAP);
-    int nread = 0;
+    ssize_t nread = 0;
     while ((nread = read_panic(STDIN_FILENO, buffer, 1)) == 0);
 
     if (buffer[0] == '\033') {
@@ -59,12 +58,53 @@ int read_sequence(char *buffer) {
     return nread;
 }
 
+ssize_t read_line(char** lineptr, size_t* n, FILE* stream) {
+    if (lineptr == NULL || n == NULL || stream == NULL) {
+        return -1;
+    }
+
+    if (*lineptr == NULL) {
+        *lineptr = malloc(STR_CAP);
+        if (*lineptr == NULL) {
+            return -1;
+        }
+        *n = STR_CAP;
+    }
+
+    size_t pos = 0;
+    int c;
+
+    while ((c = fgetc(stream)) != EOF) {
+        if (pos >= *n - 1) {
+            size_t new_size = *n * 2;
+            char *new_lineptr = realloc(*lineptr, new_size);
+            if (new_lineptr == NULL) {
+                panic("realloc");
+            }
+            *lineptr = new_lineptr;
+            *n = new_size;
+        }
+
+        (*lineptr)[pos++] = c;
+        if (c == '\n') {
+            break;
+        }
+    }
+
+    if (pos == 0 && c == EOF) {
+        return -1;
+    }
+
+    (*lineptr)[pos] = '\0';
+    return pos;
+}
+
 ssize_t get_cmd(char** cmd, size_t* maxlen) {
     if (!isatty(STDIN_FILENO)) {
         // used for tests
         setbuf(stdin, NULL);
         fprintf(stderr, "> ");
-        return getline(cmd, maxlen, stdin);
+        return read_line(cmd, maxlen, stdin);
     }
 
     struct termios old_term;
