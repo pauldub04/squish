@@ -111,7 +111,7 @@ def test_shell_pipe():
 
     assert shell.run("cat < a.txt | wc -c > b.txt | wc -l") == SYNTAX_ERR
     assert shell.run("cat < a.txt | cat < file | wc -c") == SYNTAX_ERR
-    assert shell.run("echo hello || cat > a.txt") == SYNTAX_ERR
+    assert shell.run("echo hello | | cat > a.txt") == SYNTAX_ERR
     assert shell.run("echo text |>| cat > a.txt") == SYNTAX_ERR
     assert shell.run("echo hello | >aa <bb.txt | cat > a.txt") == SYNTAX_ERR
 
@@ -143,6 +143,36 @@ def test_shell_semicolon():
     assert "still_running" in shell.run("nonexistent_command; echo still_running")
     assert NF_ERR in shell.run("nonexistent_command; echo still_running")
     assert shell.run("echo part1; echo ignored | echo part2; echo part3") == "part1\npart2\npart3"
+
+def test_shell_logical_operators():
+    shell = Shell(SHELL_PATH)
+
+    assert shell.run("echo first && echo second") == "first\nsecond"
+    assert shell.run("false && echo second") == ""
+    assert shell.run("true && echo success") == "success"
+    assert shell.run("false || echo success") == "success"
+    assert shell.run("true || echo ignored") == "true"
+
+    assert shell.run("true && echo first && echo second") == "first\nsecond"
+    assert shell.run("false || echo first && echo second") == "first\nsecond"
+    assert shell.run("false || false && echo ignored") == ""
+
+    assert shell.run("false && echo ignored; echo after_fail") == "after_fail"
+    assert shell.run("true && echo success; echo after_success") == "success\nafter_success"
+    assert shell.run("false || echo recovered; echo next_step") == "recovered\nnext_step"
+
+    assert shell.run("nonexistent_command && echo failed") == NF_ERR
+    assert "still_running" in shell.run("nonexistent_command || echo still_running")
+    assert NF_ERR in shell.run("nonexistent_command || echo still_running")
+
+    assert shell.run("echo hello && && echo world") == SYNTAX_ERR
+    assert shell.run("echo hello || || echo world") == SYNTAX_ERR
+    assert shell.run("echo hello && | echo world") == SYNTAX_ERR
+    assert shell.run("true || && echo failure") == SYNTAX_ERR
+
+    assert shell.run("echo test | wc -c && echo passed") == "5\npassed"
+    assert shell.run("false || echo test | wc -c && echo done") == "5\ndone"
+    assert shell.run("true && echo start | cat && echo end") == "start\nend"
 
 
 if __name__ == "__main__":

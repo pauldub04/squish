@@ -161,14 +161,32 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
         int result = execvp(cmd->args[0], cmd->args);
         if (result < 0) {
             dup2(saved_stdout, STDOUT_FILENO);
-            close_opened_fd(saved_stdout);
             printf("Command not found\n");
             exit(1);
         }
     } else {
-        waitpid(pid, NULL, 0);
+        int status;
+        waitpid_panic(pid, &status, 0);
+
         close_opened_fd(in_fd);
         close_opened_fd(out_fd);
+
+        if (cmd->separator == TT_OR || cmd->separator == TT_AND) {
+            if (WIFEXITED(status)) {
+                int exit_status = WEXITSTATUS(status);
+                if (exit_status == 0) {
+                    if (cmd->separator == TT_OR) {
+                        return;
+                    }
+                } else {
+                    if (cmd->separator == TT_AND) {
+                        return;
+                    }
+                }
+            } else {
+                return;
+            }
+        }
         run_cmd(cmd->next, next_in_fd, next_out_fd);
     }
 }

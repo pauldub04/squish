@@ -15,6 +15,8 @@ enum TokenType {
     TT_OUTFILE,
     TT_PIPE,
     TT_SEMICOLON,
+    TT_AND,
+    TT_OR,
 };
 
 struct Token {

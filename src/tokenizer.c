@@ -29,10 +29,21 @@ void TokenizerInit(struct Tokenizer* tokenizer, char* line) {
                 token->type = TT_OUTFILE;
                 break;
             case '|':
-                token->type = TT_PIPE;
+                if (*next == '|') {
+                    token->type = TT_OR;
+                    ++next;
+                } else {
+                    token->type = TT_PIPE;
+                }
                 break;
             case ';':
                 token->type = TT_SEMICOLON;
+                break;
+            case '&':
+                if (*next == '&') {
+                    token->type = TT_AND;
+                    ++next;
+                }
                 break;
             default:
                 token->type = TT_WORD;
@@ -64,5 +75,8 @@ void TokenizerFree(struct Tokenizer* tokenizer) {
 }
 
 bool token_is_separator(struct Token* token) {
-    return token == NULL || token->type == TT_PIPE || token->type == TT_SEMICOLON;
+    return
+        token == NULL ||
+        token->type == TT_PIPE || token->type == TT_SEMICOLON ||
+        token->type == TT_AND || token->type == TT_OR;
 }

@@ -13,8 +13,10 @@ void panic(const char *s);
 
 pid_t fork_panic(void);
 void pipe_panic(int pipefd[2]);
-void close_opened_fd(int fd);
 ssize_t read_panic(int fd, void* buf, size_t nbytes);
+int close_panic(int fd);
+void close_opened_fd(int fd);
+pid_t waitpid_panic(pid_t pid, int* stat_loc, int options);
 
 void* malloc_panic(size_t size);
 void* realloc_panic(void* ptr, size_t size);

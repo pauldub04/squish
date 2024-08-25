@@ -19,19 +19,35 @@ void pipe_panic(int pipefd[2]) {
     }
 }
 
-void close_opened_fd(int fd) {
-    if (STDIN_FILENO <= fd && fd <= STDERR_FILENO) {
-        return;
-    }
-    close(fd);
-}
-
 ssize_t read_panic(int fd, void* buf, size_t nbytes) {
     ssize_t nread = read(fd, buf, nbytes);
     if (nread == -1) {
         panic("read");
     }
     return nread;
+}
+
+int close_panic(int fd) {
+    int res = close(fd);
+    if (res == -1) {
+        panic("close");
+    }
+    return res;
+}
+
+void close_opened_fd(int fd) {
+    if (fd == STDIN_FILENO || fd == STDOUT_FILENO || fd == STDERR_FILENO) {
+        return;
+    }
+    close_panic(fd);
+}
+
+pid_t waitpid_panic(pid_t pid, int* stat_loc, int options) {
+    pid_t res = waitpid(pid, stat_loc, options);
+    if (res == -1) {
+        panic("waitpid");
+    }
+    return res;
 }
 
 
@@ -67,5 +83,7 @@ void set_cursor_style(int style) {
 }
 
 bool is_end_of_word(char c) {
-    return c == '\0' || c == ' ' || c == '\t' || c == '\n' || c == '|' || c == ';';
+    return
+        c == '\0' || c == ' ' || c == '\t' || c == '\n' ||
+        c == '|' || c == '&' || c == ';';
 }
