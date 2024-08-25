@@ -13,7 +13,7 @@ int main(void) {
     ssize_t len = 0;
     struct Tokenizer tokenizer;
 
-    while ((len = get_cmd(&line, &maxlen)) > 0) {
+    while ((len = get_cmd(&line, &maxlen)) >= 0) {
         TokenizerInit(&tokenizer, line);
 
         Exec(&tokenizer);

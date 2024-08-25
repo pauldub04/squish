@@ -9,6 +9,7 @@ SHELL_PATH = "./shell"
 
 SYNTAX_ERR = "Syntax error"
 IO_ERR = "I/O error"
+NF_ERR = "Command not found"
 
 
 class Shell:
@@ -54,7 +55,7 @@ def test_shell_base():
 
     assert shell.run("cat /sys/proc/aa/bb") == ""
 
-    assert shell.run("foo") == "Command not found"
+    assert shell.run("foo") == NF_ERR
 
 
 def test_shell_io():
@@ -119,6 +120,30 @@ def test_shell_pipe():
 
     assert shell.run("cd / | pwd") == "/"
     assert shell.run("cd /usr | pwd") == "/usr"
+    assert shell.run("echo foo | echo bar") == "bar"
+    assert shell.run("echo foo|echo bar") == "bar"
+
+    assert "still_running" in shell.run("nonexistent_command| echo still_running")
+    assert NF_ERR in shell.run("nonexistent_command| echo still_running")
+
+
+def test_shell_semicolon():
+    shell = Shell(SHELL_PATH)
+
+    assert shell.run("echo hello; echo world") == "hello\nworld"
+    assert shell.run("echo first; echo second; echo third") == "first\nsecond\nthird"
+    assert shell.run("false; echo success") == "success"
+    assert shell.run("echo test | wc -c; echo done") == "5\ndone"
+    assert not shell.run("mkdir test_dir; cd test_dir; touch file2; rm file2; cd ..; rmdir test_dir")
+
+    assert shell.run("echo hello;; echo world") == SYNTAX_ERR
+    assert shell.run("echo foo; ; echo bar") == SYNTAX_ERR
+    assert shell.run("echo hello; | echo world") == SYNTAX_ERR
+
+    assert "still_running" in shell.run("nonexistent_command; echo still_running")
+    assert NF_ERR in shell.run("nonexistent_command; echo still_running")
+    assert shell.run("echo part1; echo ignored | echo part2; echo part3") == "part1\npart2\npart3"
+
 
 if __name__ == "__main__":
     SHELL_PATH = './' + sys.argv[1]
@@ -126,4 +151,6 @@ if __name__ == "__main__":
     test_shell_base()
     test_shell_io()
     test_shell_pipe()
+    test_shell_semicolon()
+
     print("[OK]: All tests passed!");

@@ -8,7 +8,6 @@
 enum ErrorCode {
     EC_NONE = 0,
     EC_IO,
-    EC_COMMAND_NF,
     EC_SYNTAX,
 };
 
@@ -17,6 +16,7 @@ struct Cmd {
     char* in_file;
     char* out_file;
     struct Cmd* next;
+    enum TokenType separator;
     enum ErrorCode error_code;
 };
 

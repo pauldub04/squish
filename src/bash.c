@@ -1,5 +1,4 @@
 #include "bash.h"
-#include "utils.h"
 
 struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     struct Cmd* cmd = malloc_panic(sizeof(struct Cmd));
@@ -8,11 +7,14 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     cmd->in_file  = NULL;
     cmd->out_file = NULL;
     cmd->next = NULL;
+    cmd->separator = TT_SEMICOLON;
     cmd->error_code = EC_NONE;
 
     for (struct Token* token = start; token != NULL; token = token->next) {
-        if (token->type == TT_PIPE) {
+        // here is real divider, not NULL
+        if (token_is_separator(token)) {
             cmd->next = CmdAlloc(token->next, pipeline_cnt+1);
+            cmd->separator = token->type;
             break;
         }
     }
@@ -21,7 +23,7 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     int infile_cnt = 0;
     int outfile_cnt = 0;
     int word_cnt = 0;
-    for (struct Token* token = start; token != NULL && token->type != TT_PIPE; token = token->next) {
+    for (struct Token* token = start; !token_is_separator(token); token = token->next) {
         if (token->type == TT_OUTFILE || token->type == TT_INFILE) {
             if (token->next == NULL || token->next->type != TT_WORD) {
                 cmd->error_code = EC_SYNTAX;
@@ -55,14 +57,14 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     //------------------------------------------------------------------------
 
     // split all word tokens
-    for (struct Token* token = start; token != NULL && token->type != TT_PIPE; token = token->next) {
+    for (struct Token* token = start; !token_is_separator(token); token = token->next) {
         if (token->type == TT_WORD) {
             token->start[token->len] = '\0';
         }
     }
 
     int args_cnt = 0;
-    for (struct Token* token = start; token != NULL && token->type != TT_PIPE; token = token->next) {
+    for (struct Token* token = start; !token_is_separator(token); token = token->next) {
         if (token->type == TT_OUTFILE || token->type == TT_INFILE) {
             if (token->type == TT_INFILE) {
                 cmd->in_file = token->next->start;
@@ -79,7 +81,7 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     cmd->args = (char**) malloc_panic((args_cnt+1) * sizeof(char*));
 
     int i = 0;
-    for (struct Token* token = start; token != NULL && token->type != TT_PIPE; token = token->next) {
+    for (struct Token* token = start; !token_is_separator(token); token = token->next) {
         if (token->type == TT_OUTFILE || token->type == TT_INFILE) {
             token = token->next;
             continue;
@@ -114,7 +116,7 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
     int next_out_fd = STDOUT_FILENO;
     if (strcmp(cmd->args[0], "cd") == 0) {
         if (cmd->args[1] == NULL || chdir(cmd->args[1]) < 0) {
-            cmd->error_code = EC_COMMAND_NF;
+            printf("Command not found\n");
             return;
         }
         close_opened_fd(in_fd);
@@ -138,7 +140,7 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
         }
     }
 
-    if (cmd->next != NULL) {
+    if (cmd->separator == TT_PIPE && cmd->next != NULL) {
         int pipefd[2];
         pipe_panic(pipefd);
         out_fd = pipefd[1];
@@ -150,13 +152,18 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
         if (in_fd != STDIN_FILENO) {
             dup2(in_fd, STDIN_FILENO);
         }
+        int saved_stdout = -1;
         if (out_fd != STDOUT_FILENO) {
+            saved_stdout = dup(STDOUT_FILENO);
             dup2(out_fd, STDOUT_FILENO);
         }
 
         int result = execvp(cmd->args[0], cmd->args);
         if (result < 0) {
-            cmd->error_code = EC_COMMAND_NF;
+            dup2(saved_stdout, STDOUT_FILENO);
+            close_opened_fd(saved_stdout);
+            printf("Command not found\n");
+            exit(1);
         }
     } else {
         waitpid(pid, NULL, 0);
@@ -168,9 +175,6 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
 
 void print_error(enum ErrorCode error_code) {
     switch (error_code) {
-    case EC_COMMAND_NF:
-        fprintf(stdout, "Command not found\n");
-        break;
     case EC_SYNTAX:
         fprintf(stdout, "Syntax error\n");
         break;

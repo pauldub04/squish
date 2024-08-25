@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <stdbool.h>
 
 
 void panic(const char *s);
@@ -21,5 +22,7 @@ void* realloc_panic(void* ptr, size_t size);
 void clear_line(void);
 void draw_cursor(int cursor);
 void set_cursor_style(int style);
+
+bool is_end_of_word(char c);
 
 #endif /* UTILS_H */

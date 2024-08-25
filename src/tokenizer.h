@@ -6,12 +6,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
 
 enum TokenType {
     TT_WORD,
     TT_INFILE,
     TT_OUTFILE,
     TT_PIPE,
+    TT_SEMICOLON,
 };
 
 struct Token {
@@ -28,5 +31,7 @@ struct Tokenizer {
 
 void TokenizerInit(struct Tokenizer* tokenizer, char* line);
 void TokenizerFree(struct Tokenizer* tokenizer);
+
+bool token_is_separator(struct Token* token);
 
 #endif /* TOKENIZER_H */

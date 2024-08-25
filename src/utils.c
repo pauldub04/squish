@@ -65,3 +65,7 @@ void set_cursor_style(int style) {
     // 0 = block, 4 = underline, 6 = beam, 1 = restore default
     printf("\033[%d q", style);
 }
+
+bool is_end_of_word(char c) {
+    return c == '\0' || c == ' ' || c == '\t' || c == '\n' || c == '|' || c == ';';
+}
