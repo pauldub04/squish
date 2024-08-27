@@ -50,6 +50,14 @@ pid_t waitpid_panic(pid_t pid, int* stat_loc, int options) {
     return res;
 }
 
+char* getcwd_panic(char* buf, size_t size) {
+    char* res = getcwd(buf, size);
+    if (res == NULL) {
+        panic("getcwd");
+    }
+    return res;
+}
+
 
 void* malloc_panic(size_t size) {
     void* res = malloc(size);
@@ -72,8 +80,8 @@ void clear_line(void) {
     printf("\033[2K\r");
 }
 
-void draw_cursor(int cursor) {
-    printf("\033[%dG", cursor+3);
+void draw_cursor(int cursor, int offset) {
+    printf("\033[%dG", cursor+offset);
 }
 
 void set_cursor_style(int style) {
@@ -81,6 +89,17 @@ void set_cursor_style(int style) {
     // 0 = block, 4 = underline, 6 = beam, 1 = restore default
     printf("\033[%d q", style);
 }
+
+int print_prompt_line(void) {
+    char left_prompt[PATH_MAX];
+    const char* right_prompt = " > ";
+
+    getcwd_panic(left_prompt, sizeof(left_prompt));
+    printf(BLUE("%s")GREEN("%s"), left_prompt, right_prompt);
+
+    return strlen(left_prompt) + strlen(right_prompt);
+}
+
 
 bool is_end_of_word(char c) {
     return

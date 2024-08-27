@@ -105,6 +105,7 @@ void input_delete_word(struct Input *input) {
 
 void input_print(struct Input *input) {
     clear_line();
-    printf("> %s", input->str);
-    draw_cursor(input->cursor);
+    int prompt_size = print_prompt_line();
+    printf("%s", input->str);
+    draw_cursor(input->cursor, prompt_size+1);
 }

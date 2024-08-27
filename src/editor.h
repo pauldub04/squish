@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <termios.h>
-#include <limits.h>
 
 #define SEQ_CAP 8
 
