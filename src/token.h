@@ -26,13 +26,8 @@ struct Token {
     struct Token* next;
 };
 
-struct Tokenizer {
-    size_t token_count;
-    struct Token* head;
-};
-
-void TokenizerInit(struct Tokenizer* tokenizer, char* line);
-void TokenizerFree(struct Tokenizer* tokenizer);
+struct Token* token_alloc(char* line);
+void token_free(struct Token* token);
 
 bool token_is_separator(struct Token* token);
 

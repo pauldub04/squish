@@ -1,9 +1,8 @@
-#include "bash.h"
+#include "token.h"
 #include "editor.h"
+#include "exec.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 
 int main(void) {
@@ -11,14 +10,11 @@ int main(void) {
     size_t maxlen = 0;
 
     ssize_t len = 0;
-    struct Tokenizer tokenizer;
 
     while ((len = get_cmd(&line, &maxlen)) >= 0) {
-        TokenizerInit(&tokenizer, line);
-
-        Exec(&tokenizer);
-
-        TokenizerFree(&tokenizer);
+        struct Token* token_head = token_alloc(line);
+        run_cmd(token_head);
+        token_free(token_head);
     }
 
     if (line) {

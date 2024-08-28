@@ -1,7 +1,7 @@
 #ifndef BASH_H
 #define BASH_H
 
-#include "tokenizer.h"
+#include "token.h"
 
 #include <stdbool.h>
 
@@ -20,13 +20,14 @@ struct Cmd {
     enum ErrorCode error_code;
 };
 
-struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt);
-void CmdFree(struct Cmd* cmd);
+struct Cmd* cmd_alloc(struct Token* cmd_head, int pipeline_cnt);
+void cmd_free(struct Cmd* cmd);
 
-void run_cmd(struct Cmd* cmd, int in_fd, int out_fd);
 void print_error(enum ErrorCode error_code);
-bool check_error_list(struct Cmd* start);
-void print_error_list(struct Cmd* start); 
-void Exec(struct Tokenizer* tokenizer);
+void print_error_list(struct Cmd* cmd_head); 
+bool check_error_list(struct Cmd* cmd_head);
+
+void exec_cmd(struct Cmd* cmd, int in_fd, int out_fd);
+void run_cmd(struct Token* token_head);
 
 #endif /* BASH_H */

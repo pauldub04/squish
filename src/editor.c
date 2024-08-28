@@ -10,11 +10,11 @@ void termios_enter(struct termios* old_term) {
 
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
-    set_cursor_style(6);
+    editor_set_cursor_style(6);
 }
 
 void termios_leave(struct termios* old_term) {
-    set_cursor_style(1);
+    editor_set_cursor_style(1);
     tcsetattr(STDIN_FILENO, TCSANOW, old_term);
 }
 
@@ -52,7 +52,7 @@ ssize_t get_cmd(char** cmd, size_t* maxlen) {
         // used for tests
         setbuf(stdin, NULL);
         fprintf(stderr, "> ");
-        return read_line(cmd, maxlen, stdin);
+        return editor_read_line(cmd, maxlen, stdin);
     }
 
     struct termios old_term;
@@ -66,7 +66,7 @@ ssize_t get_cmd(char** cmd, size_t* maxlen) {
     char sequence[SEQUENCE_CAP];
     enum KeyAction action = KEY_NONE;
     while (action != KEY_NEWLINE) {
-        read_sequence(sequence);
+        editor_read_sequence(sequence);
         action = identify_key(sequence);
 
         switch (action) {
@@ -118,7 +118,7 @@ ssize_t get_cmd(char** cmd, size_t* maxlen) {
     termios_leave(&old_term);
 
     if (history.inputs[history.current].len > 0) {
-        append_to_file(HISTORY_FILE, history.inputs[history.current].str);
+        file_append_line(HISTORY_FILE, history.inputs[history.current].str);
     }
 
     // newline for cmd execution

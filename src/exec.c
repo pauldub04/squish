@@ -1,6 +1,6 @@
-#include "bash.h"
+#include "exec.h"
 
-struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
+struct Cmd* cmd_alloc(struct Token* cmd_head, int pipeline_cnt) {
     struct Cmd* cmd = malloc_panic(sizeof(struct Cmd));
 
     cmd->args = NULL;
@@ -10,10 +10,10 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     cmd->separator = TT_SEMICOLON;
     cmd->error_code = EC_NONE;
 
-    for (struct Token* token = start; token != NULL; token = token->next) {
+    for (struct Token* token = cmd_head; token != NULL; token = token->next) {
         // here is real divider, not NULL
         if (token_is_separator(token)) {
-            cmd->next = CmdAlloc(token->next, pipeline_cnt+1);
+            cmd->next = cmd_alloc(token->next, pipeline_cnt+1);
             cmd->separator = token->type;
             break;
         }
@@ -23,7 +23,7 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     int infile_cnt = 0;
     int outfile_cnt = 0;
     int word_cnt = 0;
-    for (struct Token* token = start; !token_is_separator(token); token = token->next) {
+    for (struct Token* token = cmd_head; !token_is_separator(token); token = token->next) {
         if (token->type == TT_OUTFILE || token->type == TT_INFILE) {
             if (token->next == NULL || token->next->type != TT_WORD) {
                 cmd->error_code = EC_SYNTAX;
@@ -57,14 +57,14 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     //------------------------------------------------------------------------
 
     // split all word tokens
-    for (struct Token* token = start; !token_is_separator(token); token = token->next) {
+    for (struct Token* token = cmd_head; !token_is_separator(token); token = token->next) {
         if (token->type == TT_WORD) {
             token->start[token->len] = '\0';
         }
     }
 
     int args_cnt = 0;
-    for (struct Token* token = start; !token_is_separator(token); token = token->next) {
+    for (struct Token* token = cmd_head; !token_is_separator(token); token = token->next) {
         if (token->type == TT_OUTFILE || token->type == TT_INFILE) {
             if (token->type == TT_INFILE) {
                 cmd->in_file = token->next->start;
@@ -81,7 +81,7 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     cmd->args = (char**) malloc_panic((args_cnt+1) * sizeof(char*));
 
     int i = 0;
-    for (struct Token* token = start; !token_is_separator(token); token = token->next) {
+    for (struct Token* token = cmd_head; !token_is_separator(token); token = token->next) {
         if (token->type == TT_OUTFILE || token->type == TT_INFILE) {
             token = token->next;
             continue;
@@ -95,11 +95,11 @@ struct Cmd* CmdAlloc(struct Token* start, int pipeline_cnt) {
     return cmd;
 }
 
-void CmdFree(struct Cmd* cmd) {
+void cmd_free(struct Cmd* cmd) {
     if (cmd == NULL) {
         return;
     }
-    CmdFree(cmd->next);
+    cmd_free(cmd->next);
 
     if (cmd->args != NULL) {
         free(cmd->args);
@@ -107,7 +107,43 @@ void CmdFree(struct Cmd* cmd) {
     free(cmd);
 }
 
-void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
+
+void print_error(enum ErrorCode error_code) {
+    switch (error_code) {
+    case EC_SYNTAX:
+        fprintf(stdout, "Syntax error\n");
+        break;
+    case EC_IO:
+        fprintf(stdout, "I/O error\n");
+        break;
+    default:
+        break;
+    }
+}
+
+void print_error_list(struct Cmd* cmd_head) {
+    enum ErrorCode error_code = EC_NONE;
+    for (struct Cmd* cmd = cmd_head; cmd != NULL; cmd = cmd->next) {
+        if (cmd->error_code > error_code) {
+            error_code = cmd->error_code;
+        }
+    }
+    if (error_code != EC_NONE) {
+        print_error(error_code);
+    }
+}
+
+bool check_error_list(struct Cmd* cmd_head) {
+    for (struct Cmd* cmd = cmd_head; cmd != NULL; cmd = cmd->next) {
+        if (cmd->error_code != EC_NONE) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+void exec_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
     if (cmd == NULL) {
         return;
     }
@@ -121,7 +157,7 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
         }
         close_opened_fd(in_fd);
         close_opened_fd(out_fd);
-        run_cmd(cmd->next, next_in_fd, next_out_fd);
+        exec_cmd(cmd->next, next_in_fd, next_out_fd);
         return;
     }
 
@@ -187,58 +223,25 @@ void run_cmd(struct Cmd* cmd, int in_fd, int out_fd) {
                 return;
             }
         }
-        run_cmd(cmd->next, next_in_fd, next_out_fd);
+        exec_cmd(cmd->next, next_in_fd, next_out_fd);
     }
 }
 
-void print_error(enum ErrorCode error_code) {
-    switch (error_code) {
-    case EC_SYNTAX:
-        fprintf(stdout, "Syntax error\n");
-        break;
-    case EC_IO:
-        fprintf(stdout, "I/O error\n");
-        break;
-    default:
-        break;
-    }
-}
-
-bool check_error_list(struct Cmd* start) {
-    for (struct Cmd* cmd = start; cmd != NULL; cmd = cmd->next) {
-        if (cmd->error_code != EC_NONE) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void print_error_list(struct Cmd* start) {
-    enum ErrorCode error_code = EC_NONE;
-    for (struct Cmd* cmd = start; cmd != NULL; cmd = cmd->next) {
-        if (cmd->error_code > error_code) {
-            error_code = cmd->error_code;
-        }
-    }
-    if (error_code != EC_NONE) {
-        print_error(error_code);
-    }
-}
-
-void Exec(struct Tokenizer* tokenizer) {
-    if (tokenizer->head == NULL) {
+void run_cmd(struct Token* token_head) {
+    if (token_head == NULL) {
         return;
     }
 
-    struct Cmd* start = CmdAlloc(tokenizer->head, 0);
+    // getting list of commands
+    struct Cmd* cmd_head = cmd_alloc(token_head, 0);
 
-    if (!check_error_list(start)) {
-        run_cmd(start, STDIN_FILENO, STDOUT_FILENO);
+    if (!check_error_list(cmd_head)) {
+        exec_cmd(cmd_head, STDIN_FILENO, STDOUT_FILENO);
     }
 
-    if (check_error_list(start)) {
-        print_error_list(start);
+    if (check_error_list(cmd_head)) {
+        print_error_list(cmd_head);
     }
 
-    CmdFree(start);
+    cmd_free(cmd_head);
 }

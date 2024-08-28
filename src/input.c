@@ -104,10 +104,10 @@ void input_delete_word(struct Input *input) {
 }
 
 void input_print(struct Input *input) {
-    clear_line();
-    int prompt_size = print_prompt_line();
+    editor_clear_line();
+    int prompt_size = editor_print_prompt_line();
     printf("%s", input->str);
-    draw_cursor(input->cursor, prompt_size+1);
+    editor_draw_cursor(input->cursor, prompt_size+1);
 }
 
 void history_append(struct History* history, struct Input* input) {
@@ -121,7 +121,7 @@ void history_append(struct History* history, struct Input* input) {
 void history_init(struct History* history) {
     history->current = history->len = 0;
 
-    int lines = count_lines_file(HISTORY_FILE);
+    int lines = file_count_lines(HISTORY_FILE);
 
     FILE* file = fopen(HISTORY_FILE, "r");
     if (file == NULL) {
@@ -137,7 +137,7 @@ void history_init(struct History* history) {
     int lines_read = 0;
 
     struct Input input;
-    while (read_line(&str, &len, file) != -1) {
+    while (editor_read_line(&str, &len, file) != -1) {
         if (lines_read < lines-(HISTORY_CAP-1)) {
             ++lines_read;
             continue;

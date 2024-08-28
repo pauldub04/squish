@@ -1,14 +1,13 @@
-#include "tokenizer.h"
+#include "token.h"
 
 
-void TokenizerInit(struct Tokenizer* tokenizer, char* line) {
-    tokenizer->token_count = 0;
-    tokenizer->head = NULL;
+struct Token* token_alloc(char* line) {
+    struct Token* head = NULL;
 
     char* next = line;
     struct Token* last_token = NULL;
 
-    for (;;) {
+    while (1) {
         while (*next == ' ' || *next == '\t' || *next == '\n') {
             ++next;
         }
@@ -47,7 +46,7 @@ void TokenizerInit(struct Tokenizer* tokenizer, char* line) {
                 break;
             default:
                 token->type = TT_WORD;
-                while (!is_end_of_word(*next)) {
+                while (!token_is_end_of_word(*next)) {
                     ++next;
                 }
         }
@@ -57,16 +56,16 @@ void TokenizerInit(struct Tokenizer* tokenizer, char* line) {
         if (last_token) {
             last_token->next = token;
         } else {
-            tokenizer->head = token;
+            head = token;
         }
 
         last_token = token;
-        ++tokenizer->token_count;
     }
+    return head;
 }
 
-void TokenizerFree(struct Tokenizer* tokenizer) {
-    struct Token* next = tokenizer->head;
+void token_free(struct Token* head) {
+    struct Token* next = head;
     while (next) {
         struct Token* prev = next;
         next = next->next;

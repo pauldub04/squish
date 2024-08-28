@@ -28,28 +28,25 @@
 #define WHITE(s)   ANSI_COLOR("37", s)
 
 
-void panic(const char *s);
-
-pid_t fork_panic(void);
-void pipe_panic(int pipefd[2]);
+void    panic(const char *s);
+pid_t   fork_panic(void);
+void    pipe_panic(int pipefd[2]);
 ssize_t read_panic(int fd, void* buf, size_t nbytes);
-int close_panic(int fd);
-void close_opened_fd(int fd);
-pid_t waitpid_panic(pid_t pid, int* stat_loc, int options);
-pid_t waitpid_panic(pid_t pid, int* stat_loc, int options);
-char* getcwd_panic(char* buf, size_t size);
+int     close_panic(int fd);
+void    close_opened_fd(int fd);
+pid_t   waitpid_panic(pid_t pid, int* stat_loc, int options);
+char*   getcwd_panic(char* buf, size_t size);
+void*   malloc_panic(size_t size);
+void*   realloc_panic(void* ptr, size_t size);
 
-void* malloc_panic(size_t size);
-void* realloc_panic(void* ptr, size_t size);
-
-ssize_t read_sequence(char* buffer);
-ssize_t read_line(char** lineptr, size_t* n, FILE* stream);
-void clear_line(void);
-void draw_cursor(int cursor, int offset);
-void set_cursor_style(int style);
-int print_prompt_line(void);
-int count_lines_file(const char* filename);
-void append_to_file(const char* filename, const char* str);
-bool is_end_of_word(char c);
+bool    token_is_end_of_word(char c);
+ssize_t editor_read_sequence(char* buffer);
+ssize_t editor_read_line(char** lineptr, size_t* n, FILE* stream);
+void    editor_clear_line(void);
+void    editor_draw_cursor(int cursor, int offset);
+void    editor_set_cursor_style(int style);
+int     editor_print_prompt_line(void);
+int     file_count_lines(const char* filename);
+void    file_append_line(const char* filename, const char* str);
 
 #endif /* UTILS_H */
