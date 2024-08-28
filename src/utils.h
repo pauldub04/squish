@@ -13,7 +13,7 @@
 #define SEQUENCE_CAP 8
 #define STRING_CAP 1024
 #define HISTORY_CAP 1024
-#define HISTORY_FILE "shell_history"
+#define HISTORY_FILE "squish_history"
 
 #define RESET_ANSI "\033[0m"
 #define ANSI_COLOR(color_code, s) "\033[" color_code "m" s RESET_ANSI

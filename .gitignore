@@ -15,6 +15,6 @@ cmake-*
 .DS_Store
 .cache/
 build/
-shell
 main
-shell_history
+squish
+squish_history

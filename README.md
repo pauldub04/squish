@@ -1,6 +1,6 @@
-# SimpleShell
+# Squish - Small, quiet shell
 
-A simple shell implementation written in C. Part of the homework for the operating systems course at MEPhI.
+A simple shell implementation written in C.
 
 ```console
 $ echo Hello

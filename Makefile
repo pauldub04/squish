@@ -11,7 +11,7 @@ endif
 CC = cc
 CFLAGS := -std=c99 -pedantic -g -fsanitize=address,undefined -Wall -Werror
 
-TARGET := shell
+TARGET := squish
 SRC_DIR := src
 BUILD_DIR := build
 

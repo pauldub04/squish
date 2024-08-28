@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 
-SHELL_PATH = "./shell"
+SHELL_PATH = "./squish"
 
 SYNTAX_ERR = "Syntax error"
 IO_ERR = "I/O error"
