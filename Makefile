@@ -1,7 +1,13 @@
 ifeq ($(OS), Windows_NT)
 	USER_OS := Windows
+	PYTHON := python
+	RM := del /Q
+	MKDIR := mkdir
 else
 	USER_OS := $(shell uname -s)
+	PYTHON := python3
+	RM := rm -rf
+	MKDIR := mkdir -p
 endif
 
 ifneq ($(USER_OS), Darwin)
@@ -9,7 +15,7 @@ ifneq ($(USER_OS), Darwin)
 endif
 
 CC = cc
-CFLAGS := -std=c99 -pedantic -g -fsanitize=address,undefined -Wall -Werror
+CFLAGS := -std=c99 -O3 -pedantic -Wall -Werror -Wextra
 
 TARGET := squish
 SRC_DIR := src
@@ -20,8 +26,9 @@ OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:%.o=%.d)
 
 
-all: $(TARGET) test
+all: $(TARGET)
 
+test: CFLAGS += -g -fsanitize=address,undefined
 test: $(TARGET)
 	ASAN_OPTIONS=$(ASAN_OPTIONS) python3 test/test.py $(TARGET)
 
@@ -37,4 +44,4 @@ $(BUILD_DIR)/%.c.o: %.c
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET)
 
-.PHONY: all clean install
+.PHONY: all test clean
