@@ -47,52 +47,6 @@ enum KeyAction identify_key(const char* sequence) {
     return KEY_NONE;
 }
 
-ssize_t read_sequence(char* buffer) {
-    memset(buffer, 0, SEQ_CAP);
-    ssize_t nread = 0;
-    while ((nread = read_panic(STDIN_FILENO, buffer, 1)) == 0);
-
-    if (buffer[0] == '\033') {
-        nread += read(STDIN_FILENO, buffer+1, SEQ_CAP-1);
-    }
-    return nread;
-}
-
-ssize_t read_line(char** lineptr, size_t* n, FILE* stream) {
-    if (lineptr == NULL || n == NULL || stream == NULL) {
-        return -1;
-    }
-
-    if (*lineptr == NULL) {
-        *lineptr = malloc_panic(STR_CAP);
-        *n = STR_CAP;
-    }
-
-    size_t pos = 0;
-    int c;
-
-    while ((c = fgetc(stream)) != EOF) {
-        if (pos >= *n - 1) {
-            size_t new_size = *n * 2;
-            char *new_lineptr = realloc_panic(*lineptr, new_size);
-            *lineptr = new_lineptr;
-            *n = new_size;
-        }
-
-        (*lineptr)[pos++] = c;
-        if (c == '\n') {
-            break;
-        }
-    }
-
-    if (pos == 0 && c == EOF) {
-        return -1;
-    }
-
-    (*lineptr)[pos] = '\0';
-    return pos;
-}
-
 ssize_t get_cmd(char** cmd, size_t* maxlen) {
     if (!isatty(STDIN_FILENO)) {
         // used for tests
@@ -104,11 +58,12 @@ ssize_t get_cmd(char** cmd, size_t* maxlen) {
     struct termios old_term;
     termios_enter(&old_term);
 
-    struct Input input;
-    input_init(&input);
-    input_print(&input);
+    struct History history;
+    history_init(&history);
 
-    char sequence[SEQ_CAP];
+    input_print(&history.inputs[history.current]);
+
+    char sequence[SEQUENCE_CAP];
     enum KeyAction action = KEY_NONE;
     while (action != KEY_NEWLINE) {
         read_sequence(sequence);
@@ -116,51 +71,61 @@ ssize_t get_cmd(char** cmd, size_t* maxlen) {
 
         switch (action) {
             case KEY_BACKSPACE:
-                input_backspace(&input);
+                input_backspace(&history.inputs[history.current]);
                 break;
             case KEY_DELETE:
-                input_delete(&input);
+                input_delete(&history.inputs[history.current]);
                 break;
             case KEY_ARROW_LEFT:
-                input_move_cursor(&input, -1);
+                input_move_cursor(&history.inputs[history.current], -1);
                 break;
             case KEY_ARROW_RIGHT:
-                input_move_cursor(&input, +1);
+                input_move_cursor(&history.inputs[history.current], +1);
                 break;
             case KEY_ARROW_UP:
+                if (history.current-1 >= 0) {
+                    --history.current;
+                }
+                break;
             case KEY_ARROW_DOWN:
-                // TODO: add support for cmd history
+                if (history.current+1 < history.len) {
+                    ++history.current;
+                }
                 break;
 
             case KEY_CTRL_ARROW_LEFT:
-                input_move_cursor_word_left(&input);
+                input_move_cursor_word_left(&history.inputs[history.current]);
                 break;
             case KEY_CTRL_ARROW_RIGHT:
-                input_move_cursor_word_right(&input);
+                input_move_cursor_word_right(&history.inputs[history.current]);
                 break;
             case KEY_CTRL_BACKSPACE:
-                input_backspace_word(&input);
+                input_backspace_word(&history.inputs[history.current]);
                 break;
             case KEY_CTRL_DELETE:
-                input_delete_word(&input);
+                input_delete_word(&history.inputs[history.current]);
                 break;
 
             case KEY_PRINTABLE:
-                input_insert(&input, sequence[0]);
+                input_insert(&history.inputs[history.current], sequence[0]);
                 break;
             default:
                 break;
         }
-        input_print(&input);
+        input_print(&history.inputs[history.current]);
     }
 
     termios_leave(&old_term);
 
+    if (history.inputs[history.current].len > 0) {
+        append_to_file(HISTORY_FILE, history.inputs[history.current].str);
+    }
+
     // newline for cmd execution
     printf("\n");
 
-    // use strlen() instead of input.str_len just to be fully safe
-    *cmd = realloc_panic(*cmd, strlen(input.str)+1);
-    strcpy(*cmd, input.str);
+    // use strlen() instead of input.len just to be fully safe
+    *cmd = realloc_panic(*cmd, strlen(history.inputs[history.current].str)+1);
+    strcpy(*cmd, history.inputs[history.current].str);
     return strlen(*cmd);
 }

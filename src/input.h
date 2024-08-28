@@ -6,12 +6,11 @@
 #include <string.h>
 #include <stdio.h>
 
-#define STR_CAP 1024
 
 struct Input {
-    char str[STR_CAP];
+    char str[STRING_CAP];
+    int len;
     int cursor;
-    int str_len;
 };
 
 void input_init(struct Input* input);
@@ -25,7 +24,15 @@ void input_delete(struct Input *input);
 void input_delete_word(struct Input *input);
 void input_backspace(struct Input *input);
 void input_backspace_word(struct Input *input);
-
 void input_print(struct Input *input);
+
+struct History {
+    struct Input inputs[HISTORY_CAP];
+    int len;
+    int current;
+};
+
+void history_append(struct History* history, struct Input* input);
+void history_init(struct History* history);
 
 #endif /* INPUT_H */

@@ -76,6 +76,52 @@ void* realloc_panic(void* ptr, size_t size) {
 }
 
 
+ssize_t read_sequence(char* buffer) {
+    memset(buffer, 0, SEQUENCE_CAP);
+    ssize_t nread = 0;
+    while ((nread = read_panic(STDIN_FILENO, buffer, 1)) == 0);
+
+    if (buffer[0] == '\033') {
+        nread += read(STDIN_FILENO, buffer+1, SEQUENCE_CAP-1);
+    }
+    return nread;
+}
+
+ssize_t read_line(char** lineptr, size_t* n, FILE* stream) {
+    if (lineptr == NULL || n == NULL || stream == NULL) {
+        return -1;
+    }
+
+    if (*lineptr == NULL) {
+        *lineptr = malloc_panic(STRING_CAP);
+        *n = STRING_CAP;
+    }
+
+    size_t pos = 0;
+    int c;
+
+    while ((c = fgetc(stream)) != EOF) {
+        if (pos >= *n - 1) {
+            size_t new_size = *n * 2;
+            char *new_lineptr = realloc_panic(*lineptr, new_size);
+            *lineptr = new_lineptr;
+            *n = new_size;
+        }
+
+        (*lineptr)[pos++] = c;
+        if (c == '\n') {
+            break;
+        }
+    }
+
+    if (pos == 0 && c == EOF) {
+        return -1;
+    }
+
+    (*lineptr)[pos] = '\0';
+    return pos;
+}
+
 void clear_line(void) {
     printf("\033[2K\r");
 }
@@ -100,6 +146,32 @@ int print_prompt_line(void) {
     return strlen(left_prompt) + strlen(right_prompt);
 }
 
+int count_lines_file(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        return 0;
+    }
+
+    int lines = 0;
+    char ch;
+    while ((ch = fgetc(file)) != EOF) {
+        if (ch == '\n') {
+            ++lines;
+        }
+    }
+
+    fclose(file);
+    return lines;
+}
+
+void append_to_file(const char* filename, const char* str) {
+    FILE *file = fopen(filename, "a");
+    if (file == NULL) {
+        return;
+    }
+    fprintf(file, "%s\n", str);
+    fclose(file);
+}
 
 bool is_end_of_word(char c) {
     return

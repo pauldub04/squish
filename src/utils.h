@@ -10,6 +10,10 @@
 #include <string.h>
 
 #define PATH_MAX 4096
+#define SEQUENCE_CAP 8
+#define STRING_CAP 1024
+#define HISTORY_CAP 1024
+#define HISTORY_FILE "shell_history"
 
 #define RESET_ANSI "\033[0m"
 #define ANSI_COLOR(color_code, s) "\033[" color_code "m" s RESET_ANSI
@@ -38,11 +42,14 @@ char* getcwd_panic(char* buf, size_t size);
 void* malloc_panic(size_t size);
 void* realloc_panic(void* ptr, size_t size);
 
+ssize_t read_sequence(char* buffer);
+ssize_t read_line(char** lineptr, size_t* n, FILE* stream);
 void clear_line(void);
 void draw_cursor(int cursor, int offset);
 void set_cursor_style(int style);
 int print_prompt_line(void);
-
+int count_lines_file(const char* filename);
+void append_to_file(const char* filename, const char* str);
 bool is_end_of_word(char c);
 
 #endif /* UTILS_H */
