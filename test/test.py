@@ -5,8 +5,6 @@ import subprocess
 import sys
 
 
-SHELL_PATH = "./squish"
-
 SYNTAX_ERR = "Syntax error"
 IO_ERR = "I/O error"
 NF_ERR = "Command not found"
@@ -34,8 +32,8 @@ class Shell:
         return '\n'.join([x.strip() for x in stdout.split('\n') if x])
 
 
-def test_shell_base():
-    shell = Shell(SHELL_PATH)
+def test_shell_base(shell_path):
+    shell = Shell(shell_path)
 
     assert not shell.run("")
     assert shell.run("echo hello") == "hello"
@@ -51,15 +49,15 @@ def test_shell_base():
     assert not os.path.exists("./foo")
 
     assert shell.run("cat\nhello\nworld") == "hello\nworld"
-    assert shell.run(f"{SHELL_PATH}\necho hi\n{SHELL_PATH}\necho hello") == "hi\nhello"
+    assert shell.run(f"{shell_path}\necho hi\n{shell_path}\necho hello") == "hi\nhello"
 
     assert shell.run("cat /sys/proc/aa/bb") == ""
 
     assert shell.run("foo") == NF_ERR
 
 
-def test_shell_io():
-    shell = Shell(SHELL_PATH)
+def test_shell_io(shell_path):
+    shell = Shell(shell_path)
 
     assert not shell.run("echo hello world > a.txt")
     assert shell.run("cat <a.txt") == "hello world"
@@ -99,8 +97,8 @@ def test_shell_io():
     assert shell.run("cat < a.txt > b.txt") == IO_ERR
 
 
-def test_shell_pipe():
-    shell = Shell(SHELL_PATH)
+def test_shell_pipe(shell_path):
+    shell = Shell(shell_path)
 
     assert shell.run("echo hello world! | wc -c") == "13"
     assert not shell.run("echo hello world | cat > hw.txt")
@@ -127,8 +125,8 @@ def test_shell_pipe():
     assert NF_ERR in shell.run("nonexistent_command| echo still_running")
 
 
-def test_shell_semicolon():
-    shell = Shell(SHELL_PATH)
+def test_shell_semicolon(shell_path):
+    shell = Shell(shell_path)
 
     assert shell.run("echo hello; echo world") == "hello\nworld"
     assert shell.run("echo first; echo second; echo third") == "first\nsecond\nthird"
@@ -144,8 +142,9 @@ def test_shell_semicolon():
     assert NF_ERR in shell.run("nonexistent_command; echo still_running")
     assert shell.run("echo part1; echo ignored | echo part2; echo part3") == "part1\npart2\npart3"
 
-def test_shell_logical_operators():
-    shell = Shell(SHELL_PATH)
+
+def test_shell_logical_operators(shell_path):
+    shell = Shell(shell_path)
 
     assert shell.run("echo first && echo second") == "first\nsecond"
     assert shell.run("false && echo second") == ""
@@ -176,11 +175,15 @@ def test_shell_logical_operators():
 
 
 if __name__ == "__main__":
-    SHELL_PATH = './' + sys.argv[1]
+    if len(sys.argv) < 2:
+        print("[Error]: Provide the executable name as the first argument")
+        exit(1)
 
-    test_shell_base()
-    test_shell_io()
-    test_shell_pipe()
-    test_shell_semicolon()
+    shell_path = './' + sys.argv[1]
+
+    test_shell_base(shell_path)
+    test_shell_io(shell_path)
+    test_shell_pipe(shell_path)
+    test_shell_semicolon(shell_path)
 
     print("[OK]: All tests passed!");
